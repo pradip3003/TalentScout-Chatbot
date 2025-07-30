@@ -1,95 +1,164 @@
 import streamlit as st
-# --- Custom Styling for Dark Theme and UI Enhancements ---
-# --- Sleek Dark Theme Styling for TalentScout ---
-# --- ChatGPT-Style Clean UI for TalentScout ---
-st.markdown("""
-    <style>
-    html, body, .stApp {
-        background-color: #f5f5f5;
-        color: #333;
-        font-family: 'Segoe UI', sans-serif;
+import re
+
+# --- Initial Setup ---
+st.set_page_config(page_title="TalentScout Chatbot", page_icon="💬")
+st.title("💼 TalentScout - Chatbot Mode")
+
+# --- Session State Setup ---
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "candidate_info" not in st.session_state:
+    st.session_state.candidate_info = {
+        "name": None,
+        "email": None,
+        "phone": None,
+        "experience": None,
+        "position": None,
+        "location": None,
+        "tech_stack": []
     }
-    .main {
-        max-width: 800px;
-        margin: auto;
-        padding: 2rem;
-        background-color: #ffffff;
-        border-radius: 20px;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+if "ended" not in st.session_state:
+    st.session_state.ended = False
+
+# --- Greeting (on first load) ---
+if len(st.session_state.messages) == 0:
+    greeting = """
+    👋 Hello! I'm TalentScout, your AI hiring assistant.
+
+    I'll ask you a few questions to learn more about your skills, and generate technical questions based on your tech stack.
+
+    Type 'exit' or 'quit' anytime to end the chat.
+    """
+    st.session_state.messages.append({"role": "bot", "content": greeting})
+
+# --- Function: Generate Questions Manually Based on Tech Stack ---
+def generate_manual_questions(tech_stack):
+    question_bank = {
+        "Python": [
+            "What are Python's key features?",
+            "Explain the difference between list and tuple in Python.",
+            "How does Python handle memory management?",
+            "What is a Python decorator?",
+            "What are Python generators?"
+        ],
+        "React": [
+            "What is the virtual DOM in React?",
+            "Explain the difference between props and state.",
+            "What are React hooks?",
+            "How does useEffect work?",
+            "What is Redux and why is it used with React?"
+        ],
+        "Node": [
+            "What is event-driven programming in Node.js?",
+            "Explain the use of middleware in Express.js.",
+            "What is the role of package.json in Node.js?",
+            "How does Node handle asynchronous I/O?",
+            "Difference between require and import in Node.js?"
+        ],
+        "SQL": [
+            "What is normalization in SQL?",
+            "What is the difference between DELETE and TRUNCATE?",
+            "What is a JOIN? Name its types.",
+            "What is a subquery in SQL?",
+            "Write a query to find the second highest salary."
+        ]
     }
-    .stTextInput > div > div > input,
-    .stSelectbox > div,
-    textarea {
-        background-color: #ffffff !important;
-        color: #000 !important;
-        border: 1px solid #ccc;
-        border-radius: 12px;
-        padding: 10px;
-        font-size: 1rem;
-    }
-    .stButton > button {
-        background-color: #10a37f;
-        color: white;
-        font-weight: bold;
-        padding: 10px 20px;
-        border-radius: 12px;
-        border: none;
-        transition: all 0.3s ease-in-out;
-        font-size: 1rem;
-    }
-    .stButton > button:hover {
-        background-color: #0e8c6d;
-        cursor: pointer;
-    }
-    </style>
-""", unsafe_allow_html=True)
+    questions = []
+    for tech in tech_stack:
+        tech = tech.strip().title()
+        if tech in question_bank:
+            questions.extend(question_bank[tech])
+    return questions[:5 * len(tech_stack)]
 
+# --- Chat Interface ---
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
+# --- End conversation early ---
+if st.session_state.ended:
+    st.info("👋 Thanks for chatting! We'll reach out to you with next steps.")
+    st.stop()
 
-# Title
-st.title("💼 TalentScout - Hiring Assistant Chatbot")
+# --- User Input ---
+user_input = st.chat_input("Type your response...")
+if user_input:
+    # Display user message
+    st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user"):
+        st.markdown(user_input)
 
-# Sidebar
-st.sidebar.title("Candidate Information")
+    # Exit check
+    if user_input.lower() in ["exit", "quit", "bye"]:
+        goodbye = "👋 Thanks for sharing your details! We’ll reach out soon."
+        st.session_state.messages.append({"role": "bot", "content": goodbye})
+        with st.chat_message("bot"):
+            st.markdown(goodbye)
+        st.session_state.ended = True
+        st.stop()
 
-# Collect candidate information
-name = st.sidebar.text_input("Name")
-email = st.sidebar.text_input("Email")
-phone = st.sidebar.text_input("Phone Number")
-experience = st.sidebar.selectbox("Years of Experience", ["Fresher", "1-2", "3-5", "5+"])
-tech_stack = st.sidebar.multiselect("Tech Stack", ["Python", "JavaScript", "React", "Node.js", "MongoDB", "SQL", "Java", "C++"])
+    # --- Bot Logic ---
+    info = st.session_state.candidate_info
+    response = ""
 
-# Generate questions button
-if st.sidebar.button("Generate Interview Questions"):
-    st.subheader(f"👤 Candidate: {name}")
-    st.write(f"📧 Email: {email}")
-    st.write(f"📞 Phone: {phone}")
-    st.write(f"🧠 Experience: {experience}")
-    st.write(f"🛠️ Tech Stack: {', '.join(tech_stack)}")
+    if not info["name"]:
+        info["name"] = user_input
+        response = "Great! Can you share your 📧 email address?"
 
-    st.markdown("### 🔍 Suggested Technical Questions:")
-    
-    if "Python" in tech_stack:
-        st.write("- What are Python decorators and how do you use them?")
-        st.write("- Explain list vs tuple.")
-    if "JavaScript" in tech_stack:
-        st.write("- What is closure in JavaScript?")
-        st.write("- Difference between var, let, and const?")
-    if "React" in tech_stack:
-        st.write("- What are hooks in React?")
-        st.write("- What is the virtual DOM?")
-    if "Node.js" in tech_stack:
-        st.write("- How does event-driven architecture work in Node.js?")
-        st.write("- What are streams in Node.js?")
-    if "MongoDB" in tech_stack:
-        st.write("- Difference between MongoDB and SQL?")
-        st.write("- Explain schema design in MongoDB.")
-    if "SQL" in tech_stack:
-        st.write("- What is normalization?")
-        st.write("- Write a SQL query to fetch the second highest salary.")
-    if "Java" in tech_stack:
-        st.write("- What is OOP? Explain with Java example.")
-    if "C++" in tech_stack:
-        st.write("- What is the difference between pointer and reference in C++?")
+    elif not info["email"]:
+        if re.match(r"[^@\s]+@[^@\s]+\.[a-zA-Z0-9]+$", user_input):
+            info["email"] = user_input
+            response = "Thanks! What's your 📞 phone number?"
+        else:
+            response = "❌ Please enter a valid email address."
 
-    st.success("✅ Questions Generated!")
+    elif not info["phone"]:
+        if re.match(r"^\d{10}$", user_input):
+            info["phone"] = user_input
+            response = "How many years of 🧠 experience do you have? (e.g. Fresher, 1-2, 3-5, 5+)"
+        else:
+            response = "❌ Please enter a valid 10-digit mobile number."
+
+    elif not info["experience"]:
+        info["experience"] = user_input
+        response = "Which position are you applying for? 💼"
+
+    elif not info["position"]:
+        info["position"] = user_input
+        response = "Where are you currently located? 📍"
+
+    elif not info["location"]:
+        info["location"] = user_input
+        response = "Please list the 🛠️ tech stack you know (comma-separated: Python, React, etc.)"
+
+    elif not info["tech_stack"]:
+        stack = [tech.strip() for tech in user_input.split(",") if tech.strip()]
+        info["tech_stack"] = stack
+
+        # ✅ Generate questions
+        response = "Generating technical questions based on your skills..."
+        with st.chat_message("bot"):
+            st.markdown(response)
+
+        questions = generate_manual_questions(stack)
+        for q in questions:
+            st.session_state.messages.append({"role": "bot", "content": q})
+            with st.chat_message("bot"):
+                st.markdown(q)
+
+        # 🎯 End chat with goodbye
+        goodbye = "👋 That’s all for now! Thank you, and we’ll be in touch shortly."
+        st.session_state.messages.append({"role": "bot", "content": goodbye})
+        with st.chat_message("bot"):
+            st.markdown(goodbye)
+        st.session_state.ended = True
+        st.stop()
+
+    else:
+        response = "✅ All info collected. Type 'exit' to end or ask anything else."
+
+    # Add bot message
+    st.session_state.messages.append({"role": "bot", "content": response})
+    with st.chat_message("bot"):
+        st.markdown(response)
