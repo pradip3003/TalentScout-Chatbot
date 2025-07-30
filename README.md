@@ -21,12 +21,10 @@ TalentScout is an intelligent chatbot designed to assist recruitment agencies in
 
 ##  How to Run the Project
 
-1. Make sure Python and Streamlit are installed:
-   ```bash
-pip install streamlit
-
-2. To run the chatbot, use the following command:
-streamlit run app.py
+1. Clone the repository:
+```bash
+git clone https://github.com/pradip3003/TalentScout-Chatbot.git
+cd TalentScout-Chatbot
 
 ## Example Output
 If a user enters:
