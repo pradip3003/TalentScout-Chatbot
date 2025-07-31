@@ -26,9 +26,9 @@ if len(st.session_state.messages) == 0:
     greeting = """
     👋 Hello! I'm TalentScout, your AI hiring assistant.
 
-    I'll ask you a few questions to learn more about your skills, and generate technical questions based on your tech stack.
+I'll ask you a few questions to learn more about your skills and generate questions based on your tech stack.
 
-    Type 'exit' or 'quit' anytime to end the chat.
+👉 Type 'ok' to continue or 'exit' anytime to quit.
     """
     st.session_state.messages.append({"role": "bot", "content": greeting})
 
